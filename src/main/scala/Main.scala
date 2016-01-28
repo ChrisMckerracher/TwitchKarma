@@ -1,10 +1,11 @@
 import java.util.UUID
+import javax.xml.ws.spi.http.HttpContext
 
 import akka.actor.ActorSystem
 import entities.Vote
 import models.VoteModel
 import org.joda.time.DateTime
-import spray.routing.SimpleRoutingApp
+import spray.routing.{RequestContext, SimpleRoutingApp}
 
 import scala.concurrent.Await
 import scala.concurrent.duration._
@@ -40,7 +41,8 @@ object Main extends App with SimpleRoutingApp {
       get {
         parameters('user1, 'user2) { (user1, user2) =>
           complete {
-            Try(voteModel.insertVote(Vote(UUID.randomUUID, user1, user2, DateTime.now, -1))) match {
+//            if (user1.toString.toLowerCase == user2.toString.toLowerCase)
+            Try(voteModel.insertVote(Vote(UUID.randomUUID, user1.toString.toLowerCase, user2.toString.toLowerCase, DateTime.now, -1))) match {
               case Success(s) => s"$user1 downvoted $user2"
               case Failure(f) => "Failure"
             }
@@ -50,10 +52,11 @@ object Main extends App with SimpleRoutingApp {
     } ~
     path("karma") {
       get {
-        parameter('user) { user =>
-          onComplete(voteModel.findUserKarma(user).map(_.sum)) {
-            case Success(s) => complete("" + s)
-            case Failure(f) => complete("Failure")
+        parameter('user) { user => ctx =>
+          println(ctx.toString)
+          voteModel.findUserKarma(user).map(_.sum).onComplete {
+            case Success(s) => ctx.complete("" + s)
+            case Failure(f) => ctx.complete("Failure")
           }
         }
       }
