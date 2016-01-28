@@ -27,7 +27,9 @@ object Main extends App with SimpleRoutingApp {
   val route =
     path("upvote") {
       get {
-        parameters('user1, 'user2) { (user1, user2) => ctx =>
+        parameters('user1, 'user2) { (_user1, _user2) => ctx =>
+          val user1 = _user1.toString.toLowerCase
+          val user2 = _user2.toString.toLowerCase
           println(ctx.toString)
           if (user1.toString.toLowerCase == user2.toString.toLowerCase) {
             ctx.complete("You cannot vote on yourself.")
@@ -42,7 +44,9 @@ object Main extends App with SimpleRoutingApp {
     } ~
     path("downvote") {
       get {
-        parameters('user1, 'user2) { (user1, user2) => ctx =>
+        parameters('user1, 'user2) { (_user1, _user2) => ctx =>
+          val user1 = _user1.toString.toLowerCase
+          val user2 = _user2.toString.toLowerCase
           println(ctx.toString)
           if (user1.toString.toLowerCase == user2.toString.toLowerCase) {
             ctx.complete("You cannot vote on yourself.")
@@ -57,7 +61,8 @@ object Main extends App with SimpleRoutingApp {
     } ~
     path("karma") {
       get {
-        parameter('user) { user => ctx =>
+        parameter('user) { _user => ctx =>
+          val user = _user.toString.toLowerCase
           println(ctx.toString)
           voteModel.findUserKarma(user).map { voteList =>
             if (voteList.isEmpty) {
