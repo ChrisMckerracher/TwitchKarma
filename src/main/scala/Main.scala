@@ -61,9 +61,9 @@ object Main extends App with SimpleRoutingApp {
           println(ctx.toString)
           voteModel.findUserKarma(user).map { voteList =>
             if (voteList.isEmpty) {
-              ctx.complete("User is not in the database yet.")
+              ctx.complete(s"$user is not in the database yet.")
             } else {
-              ctx.complete(voteList.sum)
+              ctx.complete(s"$user has ${voteList.sum} karma")
             }
           }
         }
