@@ -27,11 +27,14 @@ object Main extends App with SimpleRoutingApp {
   val route =
     path("upvote") {
       get {
-        parameters('user1, 'user2) { (user1, user2) =>
-          complete {
+        parameters('user1, 'user2) { (user1, user2) => ctx =>
+          println(ctx.toString)
+          if (user1.toString.toLowerCase == user2.toString.toLowerCase) {
+            ctx.complete("You cannot vote on yourself.")
+          } else {
             Try(voteModel.insertVote(Vote(UUID.randomUUID, user1, user2, DateTime.now, 1))) match {
-              case Success(s) => s"$user1 upvoted $user2"
-              case Failure(f) => "Failure"
+              case Success(s) => ctx.complete(s"$user1 upvoted $user2")
+              case Failure(f) => ctx.complete("Failure")
             }
           }
         }
@@ -39,12 +42,14 @@ object Main extends App with SimpleRoutingApp {
     } ~
     path("downvote") {
       get {
-        parameters('user1, 'user2) { (user1, user2) =>
-          complete {
-//            if (user1.toString.toLowerCase == user2.toString.toLowerCase)
+        parameters('user1, 'user2) { (user1, user2) => ctx =>
+          println(ctx.toString)
+          if (user1.toString.toLowerCase == user2.toString.toLowerCase) {
+            ctx.complete("You cannot vote on yourself.")
+          } else {
             Try(voteModel.insertVote(Vote(UUID.randomUUID, user1.toString.toLowerCase, user2.toString.toLowerCase, DateTime.now, -1))) match {
-              case Success(s) => s"$user1 downvoted $user2"
-              case Failure(f) => "Failure"
+              case Success(s) => ctx.complete(s"$user1 downvoted $user2")
+              case Failure(f) => ctx.complete("Failure")
             }
           }
         }
@@ -54,9 +59,12 @@ object Main extends App with SimpleRoutingApp {
       get {
         parameter('user) { user => ctx =>
           println(ctx.toString)
-          voteModel.findUserKarma(user).map(_.sum).onComplete {
-            case Success(s) => ctx.complete("" + s)
-            case Failure(f) => ctx.complete("Failure")
+          voteModel.findUserKarma(user).map { voteList =>
+            if (voteList.isEmpty) {
+              ctx.complete("User is not in the database yet.")
+            } else {
+              ctx.complete(voteList.sum)
+            }
           }
         }
       }
