@@ -59,7 +59,7 @@ object Main extends App with SimpleRoutingApp {
       }
     }
 
-  startServer(interface = "localhost", port = 8080) {
+  startServer(interface = "159.203.16.72", port = 8080) {
     route
   }
   def createTables = {
