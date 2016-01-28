@@ -48,7 +48,7 @@ object Main extends App with SimpleRoutingApp {
       get {
         clientIP { ip =>
           println(ip.toString)
-          parameters('user1, 'user2) { (_user1, _user2) => ctx: RequestContext =>
+          parameters('user1.as[String], 'user2.as[String]) { (_user1, _user2) => ctx: RequestContext =>
             val user1 = _user1.toString.toLowerCase
             val user2 = _user2.toString.toLowerCase
             if (user1.toString.toLowerCase == user2.toString.toLowerCase) {
@@ -66,7 +66,7 @@ object Main extends App with SimpleRoutingApp {
     path("karma") {
       get {
         clientIP { ip =>
-          println(ip.toString)
+          println(ip.toOption.get.getHostAddress + "\n\n" + ip.toOption.get.toString)
           parameter('user) { _user => ctx: RequestContext =>
             val user = _user.toLowerCase
             voteModel.findUserKarma(user).map { voteList =>
