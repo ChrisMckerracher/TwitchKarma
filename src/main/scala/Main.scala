@@ -32,13 +32,17 @@ object Main extends App with SimpleRoutingApp {
           parameters('user1, 'user2) { (_user1, _user2) => ctx: RequestContext =>
             val user1 = _user1.toString.toLowerCase
             val user2 = _user2.toString.toLowerCase
-            if (user1.toString.toLowerCase == user2.toString.toLowerCase) {
-              ctx.complete("You cannot vote on yourself.")
-            } else {
-              Try(voteModel.insertVote(Vote(UUID.randomUUID, user1, user2, DateTime.now, 1))) match {
-                case Success(s) => ctx.complete(s"$user1 upvoted $user2")
-                case Failure(f) => ctx.complete("Failure")
+            if (ip.toOption.get.getHostAddress.startsWith("23.92.68") || ip.toOption.get.getHostAddress.startsWith("107.155.125")) {
+              if (user1.toString.toLowerCase == user2.toString.toLowerCase) {
+                ctx.complete("You cannot vote on yourself.")
+              } else {
+                Try(voteModel.insertVote(Vote(UUID.randomUUID, user1, user2, DateTime.now, 1))) match {
+                  case Success(s) => ctx.complete(s"$user1 upvoted $user2")
+                  case Failure(f) => ctx.complete("Failure")
+                }
               }
+            } else {
+              ctx.complete(s"Nice try, you can't cheat the system.")
             }
           }
         }
@@ -51,13 +55,17 @@ object Main extends App with SimpleRoutingApp {
           parameters('user1.as[String], 'user2.as[String]) { (_user1, _user2) => ctx: RequestContext =>
             val user1 = _user1.toString.toLowerCase
             val user2 = _user2.toString.toLowerCase
-            if (user1.toString.toLowerCase == user2.toString.toLowerCase) {
-              ctx.complete("You cannot vote on yourself.")
-            } else {
-              Try(voteModel.insertVote(Vote(UUID.randomUUID, user1.toString.toLowerCase, user2.toString.toLowerCase, DateTime.now, -1))) match {
-                case Success(s) => ctx.complete(s"$user1 downvoted $user2")
-                case Failure(f) => ctx.complete("Failure")
+            if (ip.toOption.get.getHostAddress.startsWith("23.92.68") || ip.toOption.get.getHostAddress.startsWith("107.155.125")) {
+              if (user1.toString.toLowerCase == user2.toString.toLowerCase) {
+                ctx.complete("You cannot vote on yourself.")
+              } else {
+                Try(voteModel.insertVote(Vote(UUID.randomUUID, user1.toString.toLowerCase, user2.toString.toLowerCase, DateTime.now, -1))) match {
+                  case Success(s) => ctx.complete(s"$user1 downvoted $user2")
+                  case Failure(f) => ctx.complete("Failure")
+                }
               }
+            } else {
+              ctx.complete(s"Nice try, you can't cheat the system.")
             }
           }
         }
@@ -66,15 +74,18 @@ object Main extends App with SimpleRoutingApp {
     path("karma") {
       get {
         clientIP { ip =>
-          println(ip.toOption.get.getHostAddress + "\n\n" + ip.toOption.get.toString)
           parameter('user) { _user => ctx: RequestContext =>
             val user = _user.toLowerCase
-            voteModel.findUserKarma(user).map { voteList =>
-              if (voteList.isEmpty) {
-                ctx.complete(s"$user is not in the database yet.")
-              } else {
-                ctx.complete(s"$user has ${voteList.sum} karma")
+            if (ip.toOption.get.getHostAddress.startsWith("23.92.68") || ip.toOption.get.getHostAddress.startsWith("107.155.125")) {
+              voteModel.findUserKarma(user).map { voteList =>
+                if (voteList.isEmpty) {
+                  ctx.complete(s"$user is not in the database yet.")
+                } else {
+                  ctx.complete(s"$user has ${voteList.sum} karma.")
+                }
               }
+            } else {
+              ctx.complete(s"Nice try, you can't cheat the system.")
             }
           }
         }
