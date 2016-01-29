@@ -43,10 +43,26 @@ object Main extends App with SimpleRoutingApp {
                     if (user1.toString.toLowerCase == user2.toString.toLowerCase) {
                       ctx.complete("You cannot vote on yourself.")
                     } else {
-                      Try(voteModel.insertVote(Vote(UUID.randomUUID, user1, user2, DateTime.now, 1))) match {
-                        case Success(s) => ctx.complete(s"$user1 upvoted $user2")
-                        case Failure(f) => ctx.complete("Failure")
+                      voteModel.findSentVotes(user1).map { sentVotes =>
+                        val last10 = sentVotes.take(10)
+
+                        val voteMap = last10.map(_.user2).distinct.map(v => v -> last10.filter(_.user2 == v).map(_.time)).toMap
+                        voteMap.foreach { usersVotedOn =>
+                          val credits = 10 +
+                            (DateTime.now.getMillis - last10.head.time.getMillis).millisecond.toMinutes -
+                            ((1 - Math.pow(1.25, usersVotedOn._2.length)) / (1 - 1.25))
+                          if (credits - Math.pow(1.25, usersVotedOn._2.length + 1) <= 0) {
+                            ctx.complete("You have voted too many times recently. Please wait and try again.")
+                          } else {
+                            Try(voteModel.insertVote(Vote(UUID.randomUUID, user1, user2, DateTime.now, 1))) match {
+                              case Success(s) => ctx.complete(s"$user1 upvoted $user2")
+                              case Failure(f) => ctx.complete("Failure")
+                            }
+                          }
+                        }
                       }
+
+
                     }
                   } else {
                     ctx.complete(s"Nice try, you can't cheat the system.")
@@ -74,9 +90,23 @@ object Main extends App with SimpleRoutingApp {
                     if (user1.toString.toLowerCase == user2.toString.toLowerCase) {
                       ctx.complete("You cannot vote on yourself.")
                     } else {
-                      Try(voteModel.insertVote(Vote(UUID.randomUUID, user1.toString.toLowerCase, user2.toString.toLowerCase, DateTime.now, -1))) match {
-                        case Success(s) => ctx.complete(s"$user1 downvoted $user2")
-                        case Failure(f) => ctx.complete("Failure")
+                      voteModel.findSentVotes(user1).map { sentVotes =>
+                        val last10 = sentVotes.take(10)
+
+                        val voteMap = last10.map(_.user2).distinct.map(v => v -> last10.filter(_.user2 == v).map(_.time)).toMap
+                        voteMap.foreach { usersVotedOn =>
+                          val credits = 10 +
+                            (DateTime.now.getMillis - last10.head.time.getMillis).millisecond.toMinutes -
+                            ((1 - Math.pow(1.25, usersVotedOn._2.length)) / (1 - 1.25))
+                          if (credits - Math.pow(1.25, usersVotedOn._2.length + 1) <= 0) {
+                            ctx.complete("You have voted too many times recently. Please wait and try again.")
+                          } else {
+                            Try(voteModel.insertVote(Vote(UUID.randomUUID, user1.toString.toLowerCase, user2.toString.toLowerCase, DateTime.now, -1))) match {
+                              case Success(s) => ctx.complete(s"$user1 downvoted $user2")
+                              case Failure(f) => ctx.complete(s"Failed to downvote user.")
+                            }
+                          }
+                        }
                       }
                     }
                   } else {
