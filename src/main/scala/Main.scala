@@ -57,7 +57,10 @@ object Main extends App with SimpleRoutingApp {
                           credits -= ((1 - Math.pow(1.25, usersVotedOn._2.length)) / (1 - 1.25))
                         }
                         println("credits: " + credits)
-                        if (credits - Math.pow(1.25, voteMap(user2).length + 1) <= 0) {
+                        var allocation = credits
+                        if (voteMap.contains(user2))
+                          allocation -= Math.pow(1.25, voteMap(user2).length + 1)
+                        if (allocation <= 0) {
                           ctx.complete("You have voted too many times recently. Please wait and try again.")
                         } else {
                           Try(voteModel.insertVote(Vote(UUID.randomUUID, user1, user2, DateTime.now, 1))) match {
@@ -107,7 +110,10 @@ object Main extends App with SimpleRoutingApp {
                           credits -= ((1 - Math.pow(1.25, usersVotedOn._2.length)) / (1 - 1.25))
                         }
                         println("credits: " + credits)
-                        if (credits - Math.pow(1.25, voteMap(user2).length + 1) <= 0) {
+                        var allocation = credits
+                        if (voteMap.contains(user2))
+                          allocation -= Math.pow(1.25, voteMap(user2).length + 1)
+                        if (allocation <= 0) {
                           ctx.complete("You have voted too many times recently. Please wait and try again.")
                         } else {
                           Try(voteModel.insertVote(Vote(UUID.randomUUID, user1.toString.toLowerCase, user2.toString.toLowerCase, DateTime.now, -1))) match {
