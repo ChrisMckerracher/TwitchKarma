@@ -48,7 +48,10 @@ object Main extends App with SimpleRoutingApp {
                         println("last10: " + last10)
                         val voteMap = last10.map(_.user2).distinct.map(v => v -> last10.filter(_.user2 == v).map(_.time)).toMap
                         println("voteMap: " + voteMap)
-                        var credits = 10 + (DateTime.now.getMillis - last10.head.time.getMillis).millisecond.toMinutes
+                        var credits = 10.0
+                        if (voteMap.nonEmpty)
+                          credits += (DateTime.now.getMillis - last10.head.time.getMillis).millisecond.toMinutes
+
                         voteMap.foreach { usersVotedOn =>
                           println("usersVotedOn: " + usersVotedOn)
                           credits -= ((1 - Math.pow(1.25, usersVotedOn._2.length)) / (1 - 1.25))
@@ -95,7 +98,10 @@ object Main extends App with SimpleRoutingApp {
                         println("last10: " + last10)
                         val voteMap = last10.map(_.user2).distinct.map(v => v -> last10.filter(_.user2 == v).map(_.time)).toMap
                         println("voteMap: " + voteMap)
-                        var credits = 10 + (DateTime.now.getMillis - last10.head.time.getMillis).millisecond.toMinutes
+                        var credits = 10.0
+                        if (voteMap.nonEmpty)
+                          credits += (DateTime.now.getMillis - last10.head.time.getMillis).millisecond.toMinutes
+
                         voteMap.foreach { usersVotedOn =>
                           println("usersVotedOn: " + usersVotedOn)
                           credits -= ((1 - Math.pow(1.25, usersVotedOn._2.length)) / (1 - 1.25))
