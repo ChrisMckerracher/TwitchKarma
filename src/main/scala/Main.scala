@@ -45,12 +45,16 @@ object Main extends App with SimpleRoutingApp {
                     } else {
                       voteModel.findSentVotes(user1).map { sentVotes =>
                         val last10 = sentVotes.take(10)
-
+                        println("last10: " + last10)
                         val voteMap = last10.map(_.user2).distinct.map(v => v -> last10.filter(_.user2 == v).map(_.time)).toMap
+                        println("voteMap: " + voteMap)
                         voteMap.foreach { usersVotedOn =>
+                          println("usersVotedOn: " + usersVotedOn)
                           val credits = 10 +
                             (DateTime.now.getMillis - last10.head.time.getMillis).millisecond.toMinutes -
                             ((1 - Math.pow(1.25, usersVotedOn._2.length)) / (1 - 1.25))
+                          println("credits: " + credits)
+
                           if (credits - Math.pow(1.25, usersVotedOn._2.length + 1) <= 0) {
                             ctx.complete("You have voted too many times recently. Please wait and try again.")
                           } else {
@@ -61,8 +65,6 @@ object Main extends App with SimpleRoutingApp {
                           }
                         }
                       }
-
-
                     }
                   } else {
                     ctx.complete(s"Nice try, you can't cheat the system.")
