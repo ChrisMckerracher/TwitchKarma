@@ -31,9 +31,10 @@ object Main extends App with SimpleRoutingApp {
   val route =
     path("upvote") {
       get {
-        clientIP { ip => ctx =>
-          println(s"$ip sent request $ctx")
-          parameters('user1, 'user2) { (_user1, _user2) =>
+        clientIP { ip =>
+          println(s"$ip sent request.")
+          parameters('user1, 'user2) { (_user1, _user2) => ctx: RequestContext =>
+            println(s"Request: $ctx")
             val user1 = _user1.toString.toLowerCase
             val user2 = _user2.toString.toLowerCase
             isUserInvalid(user1)
@@ -43,7 +44,7 @@ object Main extends App with SimpleRoutingApp {
             .fallbackTo(cantVote(user1, user2))
             .fallbackTo(
               Try(voteModel.insertVote(Vote(UUID.randomUUID, user1, user2, DateTime.now, 1))) match {
-                case Success(s) => getKarma(user2).map( karma => s"$user1 upvoted $user2. $user2 has $karma")
+                case Success(s) => getKarma(user2).map( karma => s"$user1 upvoted $user2. $karma")
                 case Failure(f) => Future("Failure")
               }).map(message => ctx.complete(message))
           }
