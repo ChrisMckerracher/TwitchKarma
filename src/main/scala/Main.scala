@@ -30,7 +30,7 @@ object Main extends App with SimpleRoutingApp {
 
   val route =
     path("upvote") {
-      get { ctx: RequestContext =>
+      get {
         parameters('user1.as[String], 'user2.as[String]) { (_user1, _user2) =>
           clientIP { ip =>
             println(s"$ip sent request.")
@@ -54,7 +54,7 @@ object Main extends App with SimpleRoutingApp {
       }
     } ~
     path("downvote") {
-      get { ctx: RequestContext =>
+      get {
         parameters('user1.as[String], 'user2.as[String]) { (_user1, _user2) =>
           clientIP { ip =>
             println(s"$ip sent request.")
@@ -77,7 +77,7 @@ object Main extends App with SimpleRoutingApp {
       }
     } ~
     path("karma") {
-      get { ctx: RequestContext =>
+      get {
         parameters('user.as[String]) { _user =>
           clientIP { ip =>
             val user = _user.toLowerCase
