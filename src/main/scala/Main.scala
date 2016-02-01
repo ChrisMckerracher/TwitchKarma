@@ -29,68 +29,64 @@ object Main extends App with SimpleRoutingApp {
   createTables
 
   val route =
-    path("upvote") {
-      get {
-        parameters('user1.as[String], 'user2.as[String]) { (_user1, _user2) =>
-          clientIP { ip =>
-            println(s"$ip sent request.")
-            println(s"Request: $ctx")
-            val user1 = _user1.toString.toLowerCase
-            val user2 = _user2.toString.toLowerCase
-            complete(
-              isUserInvalid(user1)
-                .fallbackTo(isUserInvalid(user2))
-                .fallbackTo(isNotNightbot(ip))
-                .fallbackTo(isSelfVote(user1, user2))
-                .fallbackTo(cantVote(user1, user2))
-                .fallbackTo(
-                  Try(voteModel.insertVote(Vote(UUID.randomUUID, user1, user2, DateTime.now, 1))) match {
-                    case Success(s) => getKarma(user2).map(karma => s"$user1 upvoted $user2. $karma")
-                    case Failure(f) => Future("Failure")
-                  })
-            )
-          }
-        }
-      }
-    } ~
-    path("downvote") {
-      get {
-        parameters('user1.as[String], 'user2.as[String]) { (_user1, _user2) =>
-          clientIP { ip =>
-            println(s"$ip sent request.")
-            println(s"Request: $ctx")
-            val user1 = _user1.toString.toLowerCase
-            val user2 = _user2.toString.toLowerCase
-            complete(
-              isUserInvalid(user1)
-                .fallbackTo(isUserInvalid(user2))
-                .fallbackTo(isNotNightbot(ip))
-                .fallbackTo(isSelfVote(user1, user2))
-                .fallbackTo(cantVote(user1, user2))
-                .fallbackTo(
-                  Try(voteModel.insertVote(Vote(UUID.randomUUID, user1, user2, DateTime.now, -1))) match {
-                    case Success(s) => getKarma(user2).map(karma => s"$user1 downvoted $user2. $karma")
-                    case Failure(f) => Future("Failure")
-                  }))
-          }
-        }
-      }
-    } ~
-    path("karma") {
-      get {
-        parameters('user.as[String]) { _user =>
-          clientIP { ip =>
-            val user = _user.toLowerCase
-            complete(isUserInvalid(user)
-              .fallbackTo(getKarma(user)))
-          }
-        }
+  path("upvote") {
+   (get & parameters('user1.as[String], 'user2.as[String]) & clientIP) {(_user1, _user2, ip) =>
+     val user1 = _user1.toString.toLowerCase
+     val user2 = _user2.toString.toLowerCase
+     onComplete(
+       isUserInvalid(user1)
+       .fallbackTo(isUserInvalid(user2))
+       .fallbackTo(isNotNightbot(ip))
+       .fallbackTo(isSelfVote(user1, user2))
+       .fallbackTo(cantVote(user1, user2))
+       .fallbackTo(
+         Try(voteModel.insertVote(Vote(UUID.randomUUID, user1, user2, DateTime.now, 1))) match {
+           case Success(s) => getKarma(user2).map(karma => s"$user1 upvoted $user2. $karma")
+           case Failure(f) => Future("Failure")
+         })) {
+       case Success(value) => complete(value)
+       case Failure(ex)    => complete(s"An error occurred: ${ex.getMessage}")
+     }
+   }
+  } ~
+  path("downvote") {
+    (get & parameters('user1.as[String], 'user2.as[String]) & clientIP) {(_user1, _user2, ip) =>
+      val user1 = _user1.toString.toLowerCase
+      val user2 = _user2.toString.toLowerCase
+      onComplete(
+        isUserInvalid(user1)
+          .fallbackTo(isUserInvalid(user2))
+          .fallbackTo(isNotNightbot(ip))
+          .fallbackTo(isSelfVote(user1, user2))
+          .fallbackTo(cantVote(user1, user2))
+          .fallbackTo(
+            Try(voteModel.insertVote(Vote(UUID.randomUUID, user1, user2, DateTime.now, -1))) match {
+              case Success(s) => getKarma(user2).map(karma => s"$user1 downvoted $user2. $karma")
+              case Failure(f) => Future("Failure")
+            })) {
+        case Success(value) => complete(value)
+        case Failure(ex)    => complete(s"An error occurred: ${ex.getMessage}")
       }
     }
+  } ~
+  path("karma") {
+    (get & parameters('user.as[String]) & clientIP) {(_user, ip) =>
+      val user = _user.toLowerCase
+      onComplete(
+        isUserInvalid(user)
+          .fallbackTo(getKarma(user))) {
+        case Success(value) => complete(value)
+        case Failure(ex)    => complete(s"An error occurred: ${ex.getMessage}")
+      }
+    }
+  }
 
   startServer(interface = "159.203.16.72", port = 8080) {
     route
   }
+//  startServer(interface = "localhost", port = 8080) {
+//    route
+//  }
 
   def isUserInvalid(user: String): Future[String] = {
     pipeline(Get(s"https://api.twitch.tv/kraken/channels/$user")).map { response =>
